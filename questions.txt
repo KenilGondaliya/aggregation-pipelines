@@ -1,1 +1,107 @@
-hello wrold
+hello wrold 
+
+1. Count the total number of documents in the movies collection.
+---> ([{ $count: "total_movies" }])
+
+2. Find all movies released in the year 2000.
+--->  ([{"$match": {"year": 2000}}])
+
+3. List all movies with a runtime greater than 120 minutes.
+--->([{"$match": {"runtime": { "$gt": 120 }}}])
+
+4. Find all movies where the rated field is "PG-13".
+---> [{"$match": {"rated": "PG-13"}}]
+
+5. Count the number of movies in each year.
+---> [{$group: { _id: "$year","count": {"$sum": 1}}}]
+
+6. Find the average runtime of all movies.
+--->[{"$group": {_id: null,"avg_runtime": {"$avg": "$runtime"}}}]
+
+7. List the top 5 movies with the highest IMDb rating.
+---> [{"$match": {"imdb.rating": {"$exists": true}}},{"$sort": {"imdn.rating": -1}},{"$limit": 5},{"$project": {"_id":0,"title":1,"imdb.rating":1 }}]
+
+8.Find all movies where the type is "movie" (not series or episode).
+---> [{"$match": {"type": "movie"}}]
+
+9. Count the number of movies in each genre.
+---> [{"$unwind": "$genres"},{"$group": {_id: "$genres","count": {"$sum": 1}}}]
+
+10. Find all movies where Tom Hanks is in the cast.
+---> [{$match: {"cast": "Tom Hanks"}}]
+
+11. Group movies by year and count the number of movies released each year.
+---> [{$group: {_id: "$year","count": {$sum: 1}}}]
+
+12. Find the average IMDb rating for movies released each year.
+---> [{$group: {_id: null,"avgrage_imdb_rating": {$avg: "$imdb.rating"}}}]
+
+13. List the top 10 years with the most movies released.
+---> [{$group: {_id: "$year","count": {$sum: 1}}},{$sort: {"count": -1}},{$limit: 10},{$project: {"_id":1,"count":1}}]
+
+14. Find all movies where the directors field is an array with more than 2 directors.
+---> [{$match: {$expr: {$gt: [{$size: "$directors"}, 2]}}}]
+
+15. Count the number of movies where the languages field includes "English".
+--->[{$group: {_id: null,"count": {"$languages": {$sum: 1}}}}]
+
+16. Find the movie with the longest runtime.
+--->[{$group: { _id: "$runtime",  }},{$sort: {"runtime": 1}},{$limit: 1}]
+
+17. List all movies where the plot contains the word "war".
+---> [{$match: {"plot": {$regex: "war", $options: "i"}}}]
+
+18. Group movies by rated and find the average runtime for each rating.
+--->[{$group: {_id: "$rated","avg_rating": {$avg: "$runtime"}}}]
+
+19. Find all movies where the awards.wins is greater than 5.
+---> [{$match: {"awards.wins": {$gt: 5}}}]
+
+20. List the top 5 directors with the most movies.
+---> [{$unwind: "$directors"},{$group: {_id: "$directors","movieCount": {$sum: 1}}},{$sort: {"movieCount": -1}},{$limit: 5}]
+
+21.Use $lookup to join the comments collection with the movies collection and find all comments for a specific movie.
+---> [{"$match": { "_id": ObjectId("573a1390f29313caabcd587d") }},{"$lookup": {"from": "comments","localField": "_id""foreignField":"movie_id","as": "movie_comments"}},{"$project": {"_id": 0,"title": 1,"year": 1,"movie_comments.text":1"movie_commentsuser": 1}}]
+
+22.Unwind the genres array and count the number of movies in each genre.
+---> [{"$unwind": "$genres"},{"$group": {_id: "$genres","count": {"$sum": 1}}}]
+
+23. Find the average number of awards won by movies in each year
+--->[{$group: {_id: "$year","avg": {$avg: "$awards.wins"}}}]
+
+24.Use $addFields to add a new field isLong that is true if the runtime is greater than 120 minutes.
+--->[{$addFields: {"isLong": {$gt: ["$runtime", 120]}}}]
+
+25.Group movies by year and find the movie with the highest IMDb rating for each year.
+---> [{$match: {"imdb.rating": {$exists:true}}},{$group: {_id: "$year","topMovie": {$first: "$$ROOT"}}},]
+
+26. Use $project to display only the title, year, and imdb.rating fields for all movies.
+---> [{$project: {"_id":0,"title":1,"year":1,"imdb.rating":1}}]
+
+27. Find all movies where the cast includes both "Tom Hanks" and "Meg Ryan".
+---> [{$match: {"cast": {$all: ["Tom Hanks","Meg Ryan"]}}}]
+
+28. Use $unwind on the languages array and count the number of movies in each language.
+--->[{$unwind: "$languages"},{$group: {_id: "$languages","count": {$sum: 1}}},{$sort: {"count": -1}}]
+
+29. Find the top 5 actors who appear in the most movies.
+---> [{$unwind: "$cast"},{$group: {_id: "$cast","count": {$sum: 1}}},{$sort: {"count": -1}},{$limit: 5}]
+
+30. Use $lookup to join the theaters collection with the movies collection and find all theaters showing a specific movie.
+---> [{$match: {"_id": ObjectId('573a1391f29313caabcd8268')}},{$lookup: {from: "theaters",localField: "_id",foreignField: "movie_id",as: "theater_names"}},{$project: {"_id":1,"title":1,"theater_names":1}}]
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
