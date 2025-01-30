@@ -90,14 +90,155 @@ hello wrold
 30. Use $lookup to join the theaters collection with the movies collection and find all theaters showing a specific movie.
 ---> [{$match: {"_id": ObjectId('573a1391f29313caabcd8268')}},{$lookup: {from: "theaters",localField: "_id",foreignField: "movie_id",as: "theater_names"}},{$project: {"_id":1,"title":1,"theater_names":1}}]
 
+31. Find the total number of comments for each movie.
+---> [{$lookup: {from: "comments",localField: "_id",foreignField: "movie_id",as: "movie_comments"}},{$project: {"title":1,"num_comments": {$size: "$movie_comments"}}}]
 
+32. Calculate the average number of comments per movie.
+---> [{"$lookup": {"from": "comments","localField": "_id","foreignField": "movie_id","as": "movie_comments"}},{"$project": {"num_comments": { "$size": "$movie_comments" }}},{"$group": {"_id": null,"average_comments": { "$avg": "$num_comments" }}}]
 
+33. List all movies with more than 10 comments.
+---> [{$lookup: {"from": "comments","localField": "_id","foreignField": "movie_id","as": "movie_comments"}},{$addFields: {"num_commet": {$size: "$movie_comments"}}},{$match: {"num_commet": {$gt: 10}}}]
 
+34. Find the movie with the most comments.
+---> [{$lookup: {"from": "comments","localField": "_id","foreignField": "movie_id","as": "movie_comments"}},{$addFields: {"num_commet": {$size: "$movie_comments"}}},{$sort: {"num_commet": -1}}]
 
+35. Use $lookup to join the users collection with the comments collection and find all comments made by a specific user.
+---> [{"$match": { "name": "Yara Greyjoy" } },{"$lookup": {"from": "comments","localField": "_id","foreignField": "user_id","as": "user_comments"}},{"$project": {"name": 1,"user_comments": 1}}]
 
+36. Group comments by movie and calculate the average rating for each movie.
+---> [{"$lookup": {"from": "comments","localField": "_id","foreignField": "movie_id","as": "movie_comments"}},{"$unwind": "$movie_comments"},{"$group": {"_id": "$_id","title": { "$first": "$title" },"average_rating": { "$avg": "$movie_comments.rating" },"total_comments": { "$sum": 1 }}},{"$sort": { "average_rating": -1 }}]
 
+37. Find all movies where the tomatoes.viewer.rating is greater than 3.5.
+---> [{$match: {"tomatoes.viewer.rating": {$gt: 3.5}}}]
 
+38. Use $addFields to add a new field isHighlyRated that is true if the IMDb rating is greater than 8.
+---> [{$match: {"imdb.rating": {$gt: 8}}},{$group: {_id: "$imdb.rating",}},{$addFields: {"isHighlyRated": true}}]
 
+39. Find the top 5 movies with the highest tomatoes.viewer.rating.
+---> [{$match: {"tomatoes.viewer.rating": {$exists: true}}},{$project: {"title":1,"tomatoes.viewer.rating":1}},{$sort: {"tomatoes.viewer.rating": -1}},{$limit: 5}]
+
+40. Use $unwind on the awards.nominations array and count the number of nominations for each movie.
+---> [{$unwind: "$awards.nominations"},{$group: {_id: "$awards.nominations","title": {$first: "$title"},"count": {$sum: 1}}}]
+
+41. Find the total number of awards won by each movie.
+---> [{$match: {"awards.wins": {$exists:true}}},{$group: {_id: "$_id","title": {$first: "$title"},"count": {$sum: "$awards.wins"}}}, ]
+
+42. Calculate the average runtime of movies for each genre.
+--->[{$unwind: "$genres"},{$group: {_id: "$_id","genres": {$first: "$genres"},"average_num": {$avg: "$runtime"}}}, ]
+
+43. List all movies where the directors field is an array with exactly 1 director.
+---> [{$match: {$expr: {$eq: [{$size: "$directors"}, 1]}}},{$project:{"title":1,"directors":1}}]
+
+44. Find the top 5 movies with the most awards.
+---> [{$match: {"title": {$exists:true}}},{$group: {_id: "$title","count": {$sum: "$awards.wins"}}},]
+
+45. Use $unwind on the cast array and count the number of movies each actor has appeared in.
+--->[{$unwind: "$cast"},{$group: {_id: "$cast","movie_count": {$sum:1}}}]
+
+46. Find all movies where the plot contains the word "love".
+---> [{$match: {"plot": {$regex: "Love", $options: "i"}}},]
+
+47. Group movies by rated and find the total number of awards won for each rating.
+---> [{$group: {_id: "$rated","movie_awards": {$sum: "$awards.wins"}}}]
+
+48. Use $addFields to add a new field isAwardWinning that is true if the movie has won at least 1 award.
+---> 
+
+49. Find the movie with the most nominations.
+--->
+
+50. List all movies where the languages field includes both "English" and "French".
+--->[{$match: {"languages": {$all: ["English", "French"]}}}]
+
+51. Use $lookup to join the theaters collection with the movies collection and find all movies showing in a specific theater.
+---> [{"$lookup": {"from": "theaters","localField": "_id","foreignField": "movie_id","as": "theater_info" }},{"$unwind": "$theater_info"  // Unwind the theater_info array to get one theater per movie},{"$match": {"theater_info.name": "Specific Theater Name"}},{"$project": {"_id": 1,"title": 1,"theater_info.name": 1}}]
+
+52. Find the total number of comments made in each year.
+---> [{$group: {_id: "$released","count": {$sum: "$num_mflix_comments"}}},{$sort: {"_id": -1}}]
+
+53. Calculate the average IMDb rating for movies in each genre.
+--->
+
+54.List all movies where the runtime is between 90 and 120 minutes.
+---> [{$match: {"runtime": {$gte: 90, $lte:120}}}]
+
+55. Use $unwind on the awards.wins array and count the number of wins for each movie.
+---> 
+
+56. Find the top 5 genres with the most movies.
+--->
+
+57. Use $project to display only the title, year, and awards.wins fields for all movies.
+--->
+
+58. Find all movies where the cast includes "Leonardo DiCaprio".
+--->
+
+59. Group movies by year and find the total runtime of all movies released each year.
+--->[{$match: {"title": {$exists:true}}},{$group: {_id: "$year","title": {$push: "$title"}}},{$project: {"year":1,"title":1}}]
+
+60.Use $lookup to join the users collection with the comments collection and find all comments made by users from a specific email domain.
+--->[{"$lookup": {"from": "users",  "localField": "user_id",   "foreignField": "_id", "as": "user_details" }},{"$unwind": "$user_details"  },{"$match": {"user_details.email": { "$regex": "@example.com$", "$options": "i" }  }},{"$project": {"_id": 1,"comment": 1, "user_details.email": 1  }}]
+
+61. Find the movie with the highest tomatoes.viewer.rating.
+--->
+
+62. List all movies where the awards.nominations is greater than 5.
+--->
+
+63. Use $addFields to add a new field isPopular that is true if the IMDb rating is greater than 7 and the movie has more than 100 comments.
+--->[{$addFields: {"isPopular": {$and: [{$gt: ["$imdb.rating",7]},{ $gt: ["$num_mflix_comments",100]}]}}}]
+
+64. Find the top 5 movies with the most nominations.
+---> 
+
+65. Use $unwind on the languages array and find the average runtime of movies in each language.
+---> 
+
+66. Group movies by year and find the average number of awards won per movie for each year.
+---> 
+
+67. Find all movies where the plot contains the word "space".
+--->
+
+68.Use $lookup to join the comments collection with the movies collection and find all movies with at least 1 comment.
+--->[{$lookup: {from: "comments",localField: "_id",foreignField: "movie_id",as: "comment_info"}},{$match: {"comment_info.0": {$exists:true}}}]
+
+69. List all movies where the directors field includes "Christopher Nolan".
+--->
+
+70. Find the total number of awards won by movies in each year.
+---> 
+
+71. Use $project to display only the title, year, and tomatoes.viewer.rating fields for all movies.
+--->
+
+72. Find all movies where the cast includes both "Brad Pitt" and "Angelina Jolie".
+--->
+
+73. Use $unwind on the genres array and find the average IMDb rating for movies in each genre.
+--->
+
+74. Group movies by rated and find the total runtime of all movies for each rating.
+---> 
+
+75. Find the top 5 movies with the highest awards.wins.
+---> 
+
+76. Use $addFields to add a new field isShort that is true if the runtime is less than 90 minutes.
+--->
+
+77. Find all movies where the languages field includes "Spanish".
+--->
+
+78. Use $lookup to join the theaters collection with the movies collection and find all theaters showing movies released in 2010.
+--->[{$lookup: {from: "movies",localField: "movie_id",foreignField: "_id",as: "movie_details"}},{$match: {"movie_details.year": 2010}},{$project: {"_id":1,"movies_details.year":1}}]
+
+79. List all movies where the awards.wins is greater than 10.
+--->
+
+80. Find the average number of nominations for movies in each genre.
+--->
 
 
 
