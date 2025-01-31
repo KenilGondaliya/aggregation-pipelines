@@ -142,10 +142,10 @@ hello wrold
 ---> [{$group: {_id: "$rated","movie_awards": {$sum: "$awards.wins"}}}]
 
 48. Use $addFields to add a new field isAwardWinning that is true if the movie has won at least 1 award.
----> 
+---> [{$addFields: {isAwardWinning: { $gt: ["$awards.wins", 0] }}}]
 
 49. Find the movie with the most nominations.
---->
+--->[{$unwind: "$awards.nominations"},{$group: {_id: "$title",totalNominations: { $sum: 1 }}},{$sort: { totalNominations: -1 }},{$limit: 1}]
 
 50. List all movies where the languages field includes both "English" and "French".
 --->[{$match: {"languages": {$all: ["English", "French"]}}}]
@@ -157,22 +157,22 @@ hello wrold
 ---> [{$group: {_id: "$released","count": {$sum: "$num_mflix_comments"}}},{$sort: {"_id": -1}}]
 
 53. Calculate the average IMDb rating for movies in each genre.
---->
+--->[{$unwind: "$genres"},{$group: {_id: "$genres",averageIMDbRating: { $avg: "$imdb.rating" }}}]
 
 54.List all movies where the runtime is between 90 and 120 minutes.
 ---> [{$match: {"runtime": {$gte: 90, $lte:120}}}]
 
 55. Use $unwind on the awards.wins array and count the number of wins for each movie.
----> 
+---> [{$unwind: "$awards.wins"},{$group: {_id: "$title",totalWins: { $sum: 1 }}}]
 
 56. Find the top 5 genres with the most movies.
---->
+--->[{$unwind: "$genres"},{$group: {_id: "$genres",count: { $sum: 1 }}},{$sort: { count: -1 }},{$limit: 5}]
 
 57. Use $project to display only the title, year, and awards.wins fields for all movies.
---->
+--->[{$project: {title: 1,year: 1,"awards.wins": 1}}]
 
 58. Find all movies where the cast includes "Leonardo DiCaprio".
---->
+--->[{$match: {cast: "Leonardo DiCaprio"}}]
 
 59. Group movies by year and find the total runtime of all movies released each year.
 --->[{$match: {"title": {$exists:true}}},{$group: {_id: "$year","title": {$push: "$title"}}},{$project: {"year":1,"title":1}}]
@@ -181,64 +181,126 @@ hello wrold
 --->[{"$lookup": {"from": "users",  "localField": "user_id",   "foreignField": "_id", "as": "user_details" }},{"$unwind": "$user_details"  },{"$match": {"user_details.email": { "$regex": "@example.com$", "$options": "i" }  }},{"$project": {"_id": 1,"comment": 1, "user_details.email": 1  }}]
 
 61. Find the movie with the highest tomatoes.viewer.rating.
---->
+--->[{$sort: { "tomatoes.viewer.rating": -1 }},{$limit: 1}]
 
 62. List all movies where the awards.nominations is greater than 5.
---->
+--->[{$match: {"awards.nominations": { $gt: 5 }}}]
 
 63. Use $addFields to add a new field isPopular that is true if the IMDb rating is greater than 7 and the movie has more than 100 comments.
 --->[{$addFields: {"isPopular": {$and: [{$gt: ["$imdb.rating",7]},{ $gt: ["$num_mflix_comments",100]}]}}}]
 
 64. Find the top 5 movies with the most nominations.
----> 
+---> [{$sort: { "awards.nominations": -1 }},{$limit: 5}]
 
 65. Use $unwind on the languages array and find the average runtime of movies in each language.
----> 
+---> [{$unwind: "$languages"},{$group: {_id: "$languages",averageRuntime: { $avg: "$runtime" }}}]
 
 66. Group movies by year and find the average number of awards won per movie for each year.
----> 
+---> [{$group: {_id: "$year",averageAwardsWon: { $avg: "$awards.wins" }}}]
 
 67. Find all movies where the plot contains the word "space".
---->
+--->[{$match: {plot: { $regex: "space", $options: "i" }}}]
 
 68.Use $lookup to join the comments collection with the movies collection and find all movies with at least 1 comment.
 --->[{$lookup: {from: "comments",localField: "_id",foreignField: "movie_id",as: "comment_info"}},{$match: {"comment_info.0": {$exists:true}}}]
 
 69. List all movies where the directors field includes "Christopher Nolan".
---->
+--->[{$match: {directors: "Christopher Nolan"}}]
 
 70. Find the total number of awards won by movies in each year.
----> 
+---> [{$group: {_id: "$year",totalAwardsWon: { $sum: "$awards.wins" }}}]
 
 71. Use $project to display only the title, year, and tomatoes.viewer.rating fields for all movies.
---->
+--->[{$project: {title: 1,year: 1,"tomatoes.viewer.rating": 1}}]
 
 72. Find all movies where the cast includes both "Brad Pitt" and "Angelina Jolie".
---->
+--->[{$match: {cast: { $all: ["Brad Pitt", "Angelina Jolie"] }}}]
 
 73. Use $unwind on the genres array and find the average IMDb rating for movies in each genre.
---->
+--->[{$unwind: "$genres"},{$group: {_id: "$genres",averageIMDbRating: { $avg: "$imdb.rating" }}}]
 
 74. Group movies by rated and find the total runtime of all movies for each rating.
----> 
+---> [{$group: {_id: "$rated",totalRuntime: { $sum: "$runtime" }}}]
 
 75. Find the top 5 movies with the highest awards.wins.
----> 
+---> [{$sort: { "awards.wins": -1 }},{$limit: 5}]
 
 76. Use $addFields to add a new field isShort that is true if the runtime is less than 90 minutes.
---->
+--->[{$addFields: {isShort: { $lt: ["$runtime", 90] }}}]
 
 77. Find all movies where the languages field includes "Spanish".
---->
+--->[{$match: {languages: "Spanish"}}]
 
 78. Use $lookup to join the theaters collection with the movies collection and find all theaters showing movies released in 2010.
 --->[{$lookup: {from: "movies",localField: "movie_id",foreignField: "_id",as: "movie_details"}},{$match: {"movie_details.year": 2010}},{$project: {"_id":1,"movies_details.year":1}}]
 
 79. List all movies where the awards.wins is greater than 10.
---->
+--->[ {$match: {"awards.wins": { $gt: 10 }}}]
 
 80. Find the average number of nominations for movies in each genre.
---->
+--->[{$unwind: "$genres"},{$group: {_id: "$genres",averageNominations: { $avg: "$awards.nominations" }}}]
+
+81. Use $unwind on the cast array and find the top 5 actors with the most awards.
+--->[{$unwind: "$cast"},{$group: {_id: "$cast","awards_num": {$sum: "$awards.wins"}}},{$sort: {"awards_num": -1}},{$limit: 5}]
+
+82. Group movies by year and find the movie with the most awards for each year.
+---> [{$group: {_id: "$year","top_movie": {$max: {"wins": "$awards.wins","title": "$title",}}}},]
+
+83. Find all movies where the plot contains the word "family".
+--->[ {$match: {plot: /family/i}}]
+
+84. Use $project to display only the title, year, and cast fields for all movies.
+--->[{$project: {title: 1,year: 1,cast: 1}}]
+
+85. Find the top 5 movies with the highest awards.nominations.
+---> [{$sort: { "awards.nominations": -1 }},{$limit: 5},{$project: {title: 1,"awards.nominations": 1}}]
+
+86. Use $addFields to add a new field isCriticallyAcclaimed that is true if the tomatoes.viewer.rating is greater than 4.
+--->[{$addFields: {isCriticallyAcclaimed: { $gt: ["$tomatoes.viewer.rating", 4] }}}]
+
+87. Find all movies where the directors field includes "Steven Spielberg".
+---> [{$match: {directors: "Steven Spielberg"}}]
+
+88. Use $lookup to join the comments collection with the movies collection and find all movies with at least 5 comments.
+---> [{$lookup: {from: "movies",localField: "movie_id",foreignField: "_id",as: "movie_info"}},{$unwind: "$movie_info"},{$match: {"movie_info.num_mflix_comments": {$eq: 5}}}]
+
+89. List all movies where the languages field includes "German".
+--->[{$match: {languages: "German" }},{$project: {title: 1,year: 1,languages: 1}}]
+
+90. Find the total number of awards won by movies in each genre.
+---> [{$unwind: "$genres"},{$group: {_id: "$genres", total_awards_won: { $sum: "$awards.wins" } }}]
+
+91. Use $unwind on the genres array and find the top 5 genres with the highest average IMDb rating.
+---> [{$unwind: "$genres"},{$group: {_id: "$genres",avg_rating: { $avg: "$imdb.rating" }}},{$sort: { avg_rating: -1 }},{
+$limit: 5 }]
+
+92. Group movies by year and find the total number of awards won for each year.
+--->[{$group: {_id: "$year",total_awards: { $sum: "$awards.wins" } }}]
+
+93. Find all movies where the plot contains the word "adventure".
+---> {$match: {plot: /adventure/i}},{$project: {title: 1plot: 1}}
+
+94. Use $project to display only the title, year, and awards.nominations fields for all movies.
+--->[ {$project: {title: 1,year: 1, "awards.nominations": 1 }}]
+
+95. Find the top 5 movies with the highest tomatoes.viewer.rating.
+--->[{$sort: { "tomatoes.viewer.rating": -1 } },{$limit: 5 },{$project: {title: 1, "tomatoes.viewer.rating": 1 
+}}]
+
+96. Use $addFields to add a new field isBlockbuster that is true if the IMDb rating is greater than 8 and the runtime is greater than 120 minutes.
+---> [{$addFields: {isBlockbuster: {$and: [{ $gt: ["$imdb.rating", 8] }, { $gt: ["$runtime", 120] }]}}}]
+
+97. Find all movies where the cast includes "Meryl Streep".
+---> [{$match: {cast: "Meryl Streep" }},{$project: {title: 1, cast: 1 }}]
+
+98. Use $lookup to join the users collection with the comments collection and find all comments made by users with a specific name.
+---> [{$lookup: {from: "comments",localField: "email",foreignField: "email",as: "comment_info"}},{$unwind: "$comment_info"},{$group: {_id: "$comment_info.name","comments": {$push: "comment_info.text"}}},{$project: {"comment_info.name": 1,"comments":1}}]
+
+99. List all movies where the directors field includes "Quentin Tarantino".
+---> [{$match: {directors: "Quentin Tarantino"}},{$project: {title: 1,year: 1,directors: 1 }}]
+
+100. Find the average runtime of movies for each year.
+--->[{$group: {_id: "$year", average_runtime: { $avg: "$runtime" } }},{$sort: { _id: 1 }}]
 
 
 
